@@ -1,6 +1,9 @@
 html {
     background-image: url('http://sakk-klub.hu/wp-content/uploads/2015/12/BvsC_Wallpaper01.jpg');
 	background-size: cover;
+    background-repeat: no-repeat;
+    height: 100%;
+    align-content: center
 }
 
 body {
@@ -123,6 +126,7 @@ body {
     width: 200px;
     text-align: left;
 	 margin-top: 5px;
+     color: #000;
 }
 
 #player {

@@ -86,11 +86,11 @@ $(document).ready(function () {
 
   var pieceValues = {
     pawn: 100,
-    knight: 320,
-    bishop: 330,
-    rook: 500,
-    queen: 900,
-    king: 20000,
+    knight: 30,
+    bishop: 30,
+    rook: 50,
+    queen: 90,
+    king: 900,
   };
 
   var positionalWeights = {
@@ -125,35 +125,35 @@ $(document).ready(function () {
     return score;
   }
 
-  function minimax(depth, alpha, beta, maximizing) {
-    if (depth === 0) return { score: evaluateBoard() };
+  function minimax(depth, alpha, beta, isMaximizingPlayer) {
+    if (depth === 0) return evaluateBoard();
 
-    var bestMove = null;
-    var bestScore = maximizing ? -Infinity : Infinity;
-    var color = maximizing ? aiColor : aiColor === "white" ? "black" : "white";
-    var moves = getAllValidMoves(color);
+    var moves = getAllValidMoves(isMaximizingPlayer ? "white" : "black");
+    if (moves.length === 0) return evaluateBoard();
 
-    for (var i = 0; i < moves.length; i++) {
-      var move = simulateMove(moves[i]);
-      var result = minimax(depth - 1, alpha, beta, !maximizing);
-      undoMove(move);
-
-      if (maximizing) {
-        if (result.score > bestScore) {
-          bestScore = result.score;
-          bestMove = moves[i];
-          alpha = Math.max(alpha, bestScore);
-        }
-      } else {
-        if (result.score < bestScore) {
-          bestScore = result.score;
-          bestMove = moves[i];
-          beta = Math.min(beta, bestScore);
-        }
+    if (isMaximizingPlayer) {
+      var maxEval = -Infinity;
+      for (var move of moves) {
+        var data = simulateMove(move.fromBox, move.toBox);
+        var eval = minimax(depth - 1, alpha, beta, false);
+        undoMove(data);
+        maxEval = Math.max(maxEval, eval);
+        alpha = Math.max(alpha, eval);
+        if (beta <= alpha) break;
       }
-      if (beta <= alpha) break;
+      return maxEval;
+    } else {
+      var minEval = Infinity;
+      for (var move of moves) {
+        var data = simulateMove(move.fromBox, move.toBox);
+        var eval = minimax(depth - 1, alpha, beta, true);
+        undoMove(data);
+        minEval = Math.min(minEval, eval);
+        beta = Math.min(beta, eval);
+        if (beta <= alpha) break;
+      }
+      return minEval;
     }
-    return { score: bestScore, move: bestMove };
   }
 
   function undoMove(moveData) {
@@ -161,7 +161,9 @@ $(document).ready(function () {
     var toBox = $("#" + moveData.toId);
 
     fromBox.attr("piece", moveData.fromPiece);
-    fromBox.html(chessPieces["white"][moveData.fromPiece.split("-")[1]]);
+    // fromBox.html(chessPieces["white"][moveData.fromPiece.split("-")[1]]);
+    var [fromColor, fromType] = moveData.fromPiece.split("-");
+    fromBox.html(chessPieces[fromColor][fromType]);
     fromBox.addClass("placed");
 
     if (moveData.toPiece) {
@@ -183,7 +185,7 @@ $(document).ready(function () {
 
     for (var move of allMoves) {
       var data = simulateMove(move.fromBox, move.toBox);
-      var score = evaluateBoard();
+      var score = minimax(maxDepth, -Infinity, Infinity, false);
       undoMove(data);
 
       if (score > bestScore) {
@@ -394,6 +396,8 @@ $(document).ready(function () {
 
   //Game's history (pieces + positions)
   var historyMoves = [];
+
+  var maxDepth = 3;
 
   //Position and color of pawn promotion
   var promotion = {};
@@ -865,7 +869,7 @@ $(document).ready(function () {
     }
 
     if (gameMode === "ai" && player === "white") {
-      setTimeout(playAIMove, 500);
+      setTimeout(playAIMove, 200);
     }
   }
 
